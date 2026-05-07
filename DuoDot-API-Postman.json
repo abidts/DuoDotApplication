@@ -9,7 +9,7 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Register User",
+          "name": "Sign Up",
           "request": {
             "method": "POST",
             "header": [
@@ -19,18 +19,18 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/auth/register",
+              "raw": "{{base_url}}/auth/signup",
               "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
+              "path": ["auth", "signup"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"countryCode\": \"+91\",\n  \"phoneNumber\": \"9876543210\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"pinId\": \"560001\"\n}"
             }
           }
         },
         {
-          "name": "Login",
+          "name": "Confirm Sign Up",
           "request": {
             "method": "POST",
             "header": [
@@ -40,13 +40,34 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/auth/login",
+              "raw": "{{base_url}}/auth/confirm-signup",
               "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "path": ["auth", "confirm-signup"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"userId\": \"User_xxxxx\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/signin",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signin"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             }
           }
         }

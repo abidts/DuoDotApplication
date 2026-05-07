@@ -1,22 +1,22 @@
 spring:
   application:
     name: duo-dot-app
-  
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/duodot
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/duodot}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-  
+
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${HIBERNATE_FORMAT_SQL:true}
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  
+
   servlet:
     multipart:
       enabled: true
@@ -24,12 +24,22 @@ spring:
       max-request-size: 50MB
       file-size-threshold: 2KB
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+
 application:
   security:
     jwt:
       secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
       expiration: 86400000 # 24 hours
       refresh-token-expiration: 604800000 # 7 days
+    otp:
+      validity-minutes: ${OTP_VALIDITY_MINUTES:5}
+      length: ${OTP_LENGTH:6}
   
   aws:
     s3:
@@ -37,9 +47,20 @@ application:
       region: ${AWS_REGION:us-east-1}
       access-key: ${AWS_ACCESS_KEY:}
       secret-key: ${AWS_SECRET_KEY:}
+    sns:
+      region: ${AWS_SMS_REGION:${AWS_REGION:us-east-1}}
+      access-key: ${AWS_SMS_ACCESS_KEY:${AWS_ACCESS_KEY:}}
+      secret-key: ${AWS_SMS_SECRET_KEY:${AWS_SECRET_KEY:}}
 
   file:
     upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+
+  notification:
+    email:
+      from: ${NOTIFICATION_EMAIL_FROM:onboarding@resend.dev}
+      resend:
+        api-key: ${RESEND_API_KEY:re_VsUR9jhG_DoK6m8ikeHtzkZmFRERexN1Y}
+        url: ${RESEND_API_URL:https://api.resend.com/emails}
 
 server:
   port: 8080
