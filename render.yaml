@@ -3,7 +3,7 @@ services:
     name: duodot
     runtime: docker
     plan: free
-    region: frankfurt
+    region: oregon
 
     envVars:
       # Spring
@@ -41,7 +41,7 @@ services:
           property: password
 
       - key: DB_URL
-        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=require
 
       # Redis
       - key: REDIS_HOST
