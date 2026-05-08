@@ -5,7 +5,7 @@ import com.duodot.service.PairService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+//@RestController
 @RequestMapping("/api/v1/pairs")
 @RequiredArgsConstructor
 public class PairController {
