@@ -43,12 +43,6 @@ services:
           name: duodot-redis
           property: port
 
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: duodot-redis
-          property: password
-
       # JWT
       - key: JWT_SECRET
         generateValue: true
