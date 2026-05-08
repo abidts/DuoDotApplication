@@ -15,10 +15,13 @@ services:
         value: 8080
 
       # Database
-      - key: DB_HOST
+      - key: DB_HOST_INTERNAL
         fromDatabase:
           name: duodot-db
           property: host
+
+      - key: DB_HOST
+        value: ${DB_HOST_INTERNAL}.render.com
 
       - key: DB_PORT
         fromDatabase:
