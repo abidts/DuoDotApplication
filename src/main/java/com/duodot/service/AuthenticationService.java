@@ -5,6 +5,7 @@ import com.duodot.constants.CommonConstants;
 import com.duodot.enums.UserStatusEnum;
 import com.duodot.requestBean.AuthenticationRequestBean;
 import com.duodot.requestBean.ConfirmSignUpRequestBean;
+import com.duodot.requestBean.RefreshTokenRequestBean;
 import com.duodot.requestBean.RegisterRequestBean;
 import com.duodot.responseBean.AuthenticationResponseBean;
 import com.duodot.responseBean.ServiceResponseBean;
@@ -18,11 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Objects;
@@ -31,13 +34,14 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final RegistrationOtpService registrationOtpService;
     private final OtpNotificationService otpNotificationService;
+    private final StringRedisTemplate stringRedisTemplate;
     
     @Transactional
     public ServiceResponseBean signUp(RegisterRequestBean request, ServiceResponseBean serviceResponseBean) {
@@ -165,6 +169,12 @@ public class AuthenticationService {
             var jwtToken = jwtService.generateToken(userDetails);
             var refreshToken = jwtService.generateRefreshToken(userDetails);
 
+            stringRedisTemplate.opsForValue().set(
+                    CommonConstants.INSTANCE.REFRESH_TOKEN_KEY_PREFIX + user.getUserId(),
+                    refreshToken,
+                    Duration.ofDays(CommonConstants.INSTANCE.REFRESH_TOKEN_VALIDITY_DAYS)
+            );
+
             AuthenticationResponseBean authenticationResponseBean = AuthenticationResponseBean.builder()
                     .accessToken(jwtToken)
                     .refreshToken(refreshToken)
@@ -179,6 +189,60 @@ public class AuthenticationService {
             serviceResponseBean.setMessage("User not found.");
         }
 
+        return serviceResponseBean;
+    }
+
+    public ServiceResponseBean signOut(String userId, ServiceResponseBean serviceResponseBean) {
+        try {
+            String redisKey = CommonConstants.INSTANCE.REFRESH_TOKEN_KEY_PREFIX + userId;
+            stringRedisTemplate.delete(redisKey);
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Sign out successful");
+        } catch (Exception e) {
+            log.error("Exception during sign out for userId={} :: {}", userId, e);
+            serviceResponseBean.setMessage("Sign out failed: " + e.getLocalizedMessage());
+        }
+        return serviceResponseBean;
+    }
+
+    public ServiceResponseBean refreshToken(RefreshTokenRequestBean request, ServiceResponseBean serviceResponseBean) {
+        try {
+            var user = userRepository.findByUserId(request.getUserId());
+            if (Objects.isNull(user)) {
+                serviceResponseBean.setMessage("User not found.");
+                return serviceResponseBean;
+            }
+            String redisKey = CommonConstants.INSTANCE.REFRESH_TOKEN_KEY_PREFIX + request.getUserId();
+            String storedRefreshToken = stringRedisTemplate.opsForValue().get(redisKey);
+
+            if (!StringUtils.hasText(storedRefreshToken)) {
+                serviceResponseBean.setMessage("Refresh token not found or expired.");
+                return serviceResponseBean;
+            }
+            if (!storedRefreshToken.equals(request.getRefreshToken())) {
+                serviceResponseBean.setMessage("Invalid refresh token.");
+                return serviceResponseBean;
+            }
+
+            var userDetails = new org.springframework.security.core.userdetails.User(
+                    user.getEmail(),
+                    user.getPassword(),
+                    java.util.Collections.emptyList()
+            );
+
+            var newAccessToken = jwtService.generateToken(userDetails);
+
+            AuthenticationResponseBean authenticationResponseBean = AuthenticationResponseBean.builder()
+                    .accessToken(newAccessToken).refreshToken(request.getRefreshToken())
+                    .build();
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Access token refreshed successfully");
+            serviceResponseBean.setData(authenticationResponseBean);
+        } catch (Exception e) {
+            log.error("Exception during refresh token for userId={} :: {}", request.getUserId(), e);
+            serviceResponseBean.setMessage("Token refresh failed: " + e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
 }

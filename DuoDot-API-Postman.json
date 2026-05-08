@@ -70,6 +70,45 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             }
           }
+        },
+        {
+          "name": "Sign Out",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/signout?userId=User_xxxxx",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signout"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "User_xxxxx"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh-token"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"User_xxxxx\",\n  \"refreshToken\": \"YOUR_REFRESH_TOKEN_HERE\"\n}"
+            }
+          }
         }
       ]
     },
