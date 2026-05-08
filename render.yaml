@@ -71,9 +71,6 @@ services:
 
     healthCheckPath: /actuator/health
     autoDeploy: true
-    dependsOn:
-      - duodot-db
-      - duodot-redis
 
   - type: redis
     name: duodot-redis
