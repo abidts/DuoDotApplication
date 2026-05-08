@@ -8,5 +8,6 @@ public class DuoDotApplication {
     
     public static void main(String[] args) {
         SpringApplication.run(DuoDotApplication.class, args);
+
     }
 }

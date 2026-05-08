@@ -40,17 +40,6 @@ application:
     otp:
       validity-minutes: ${OTP_VALIDITY_MINUTES:5}
       length: ${OTP_LENGTH:6}
-  
-  aws:
-    s3:
-      bucket-name: ${AWS_S3_BUCKET:romantic-memories}
-      region: ${AWS_REGION:us-east-1}
-      access-key: ${AWS_ACCESS_KEY:}
-      secret-key: ${AWS_SECRET_KEY:}
-    sns:
-      region: ${AWS_SMS_REGION:${AWS_REGION:us-east-1}}
-      access-key: ${AWS_SMS_ACCESS_KEY:${AWS_ACCESS_KEY:}}
-      secret-key: ${AWS_SMS_SECRET_KEY:${AWS_SECRET_KEY:}}
 
   file:
     upload-dir: ${FILE_UPLOAD_DIR:./uploads}

@@ -24,7 +24,6 @@
         <!-- Versions -->
         <jwt.version>0.12.3</jwt.version>
         <lombok.version>1.18.46</lombok.version>
-        <aws.sdk.version>2.20.26</aws.sdk.version>
         <springdoc.version>2.3.0</springdoc.version>
     </properties>
 
@@ -110,20 +109,6 @@
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>3.2.0</version>
-        </dependency>
-
-        <!-- AWS SDK -->
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>${aws.sdk.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>sns</artifactId>
-            <version>${aws.sdk.version}</version>
         </dependency>
 
         <!-- Testing -->
