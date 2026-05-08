@@ -15,10 +15,20 @@ services:
         value: 8080
 
       # Database
-      - key: DB_URL
+      - key: DB_HOST
         fromDatabase:
           name: duodot-db
-          property: connectionString
+          property: host
+
+      - key: DB_PORT
+        fromDatabase:
+          name: duodot-db
+          property: port
+
+      - key: DB_DATABASE
+        fromDatabase:
+          name: duodot-db
+          property: database
 
       - key: DB_USERNAME
         fromDatabase:
@@ -29,6 +39,9 @@ services:
         fromDatabase:
           name: duodot-db
           property: password
+
+      - key: DB_URL
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
 
       # Redis
       - key: REDIS_HOST
