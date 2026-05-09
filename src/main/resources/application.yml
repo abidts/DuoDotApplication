@@ -12,11 +12,10 @@ spring:
       maximum-pool-size: 10
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
-      # ❌ Don't use ${JPA_DDL_AUTO:update} in production
-      # Use migrations or set to "update" for dev only
-    show-sql: false  # ❌ Disable in production
+    show-sql: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
@@ -64,7 +63,7 @@ server:
 
 logging:
   level:
-    org.springframework.security.web.FilterChainProxy: ERROR
+    org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
 
 # Actuator settings for health checks
 management:
