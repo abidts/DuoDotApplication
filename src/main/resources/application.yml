@@ -7,14 +7,19 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
-    show-sql: ${JPA_SHOW_SQL:true}
+      ddl-auto: update
+      # ❌ Don't use ${JPA_DDL_AUTO:update} in production
+      # Use migrations or set to "update" for dev only
+    show-sql: false  # ❌ Disable in production
     properties:
       hibernate:
-        format_sql: ${HIBERNATE_FORMAT_SQL:true}
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   servlet:
@@ -28,7 +33,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:}  # Keep empty string default
       timeout: 2s
 
 application:
@@ -38,20 +43,33 @@ application:
       expiration: 86400000 # 24 hours
       refresh-token-expiration: 604800000 # 7 days
     otp:
-      validity-minutes: ${OTP_VALIDITY_MINUTES:5}
-      length: ${OTP_LENGTH:6}
+      validity-minutes: 5
+      length: 6
 
   file:
     upload-dir: ${FILE_UPLOAD_DIR:./uploads}
 
   notification:
     email:
-      from: ${NOTIFICATION_EMAIL_FROM:noreply@heritagecraft.in}
+      from: ${NOTIFICATION_EMAIL_FROM:noreply@example.com}
       resend:
-        api-key: ${RESEND_API_KEY:re_VsUR9jhG_DoK6m8ikeHtzkZmFRERexN1Y}
-        url: ${RESEND_API_URL:https://api.resend.com/emails}
+        api-key: ${RESEND_API_KEY:}
+        url: https://api.resend.com/emails
 
 server:
-  port: 8080
+  port: ${PORT:8080}
+  address: 0.0.0.0
   error:
     include-message: always
+
+# ✅ Actuator settings for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
