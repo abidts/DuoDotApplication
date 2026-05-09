@@ -62,7 +62,11 @@ server:
   error:
     include-message: always
 
-# ✅ Actuator settings for health checks
+logging:
+  level:
+    org.springframework.security.web.FilterChainProxy: ERROR
+
+# Actuator settings for health checks
 management:
   endpoints:
     web:
