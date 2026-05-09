@@ -3,8 +3,7 @@ services:
     name: duodot
     runtime: docker
     plan: free
-   # region: frankfurt
-    # dockerfilePath: ./Dockerfile   # Uncomment if Dockerfile is not in repo root
+    region: frankfurt
 
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -65,7 +64,7 @@ services:
   - type: redis
     name: duodot-redis
     plan: free
-    region: frunkfurt
+    region: frankfurt
     ipAllowList: []
 
 databases:
