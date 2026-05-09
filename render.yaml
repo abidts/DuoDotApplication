@@ -3,7 +3,7 @@ services:
     name: duodot
     runtime: docker
     plan: free
-    region: frankfurt
+   # region: frankfurt
     # dockerfilePath: ./Dockerfile   # Uncomment if Dockerfile is not in repo root
 
     envVars:
