@@ -52,7 +52,7 @@ application:
     email:
       from: ${NOTIFICATION_EMAIL_FROM:noreply@example.com}
       resend:
-        api-key: ${RESEND_API_KEY:}
+        api-key: ${RESEND_API_KEY:re_VsUR9jhG_DoK6m8ikeHtzkZmFRERexN1Y}
         url: https://api.resend.com/emails
 
 server:
