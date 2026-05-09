@@ -17,6 +17,7 @@ spring:
       # ❌ Don't use ${JPA_DDL_AUTO:update} in production
       # Use migrations or set to "update" for dev only
     show-sql: false  # ❌ Disable in production
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
         format_sql: false
