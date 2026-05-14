@@ -1,25 +1,12 @@
+# ─────────────────────────────────────────────
+# Common config — applies to all profiles
+# ─────────────────────────────────────────────
 spring:
   application:
     name: duo-dot-app
 
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:duodot}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      connection-timeout: 20000
-      maximum-pool-size: 10
-
-  jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    properties:
-      hibernate:
-        format_sql: false
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   servlet:
     multipart:
@@ -28,31 +15,25 @@ spring:
       max-request-size: 50MB
       file-size-threshold: 2KB
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}  # Keep empty string default
-      timeout: 2s
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 application:
   security:
     jwt:
       secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-      expiration: 86400000 # 24 hours
-      refresh-token-expiration: 604800000 # 7 days
+      expiration: 86400000
+      refresh-token-expiration: 604800000
     otp:
       validity-minutes: 5
       length: 6
-
-  file:
-    upload-dir: ${FILE_UPLOAD_DIR:./uploads}
 
   notification:
     email:
       from: ${NOTIFICATION_EMAIL_FROM:noreply@example.com}
       resend:
-        api-key: ${RESEND_API_KEY:re_VsUR9jhG_DoK6m8ikeHtzkZmFRERexN1Y}
+        api-key: ${RESEND_API_KEY:}
         url: https://api.resend.com/emails
 
 server:
@@ -61,11 +42,6 @@ server:
   error:
     include-message: always
 
-logging:
-  level:
-    org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
-
-# Actuator settings for health checks
 management:
   endpoints:
     web:
@@ -83,3 +59,106 @@ management:
       enabled: false
     diskSpace:
       enabled: false
+
+---
+# ─────────────────────────────────────────────
+# DEV profile
+# ─────────────────────────────────────────────
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/duodot
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 2s
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+firebase:
+  credentials-path: firebase-service-account.json
+
+application:
+  file:
+    upload-dir: ./uploads
+
+logging:
+  level:
+    com.duodot: DEBUG
+    org.springframework.web: INFO
+    org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR
+
+---
+# ─────────────────────────────────────────────
+# PROD profile
+# ─────────────────────────────────────────────
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 20
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 2s
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+firebase:
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH}
+
+application:
+  file:
+    upload-dir: ${FILE_UPLOAD_DIR}
+
+logging:
+  level:
+    com.duodot: INFO
+    org.springframework.web.servlet.handler.HandlerMappingIntrospector: ERROR

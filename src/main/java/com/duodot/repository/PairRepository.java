@@ -1,21 +1,23 @@
 package com.duodot.repository;
 
 import com.duodot.entity.Pair;
-import com.duodot.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PairRepository extends JpaRepository<Pair, Long> {
-    
-    @Query("SELECT p FROM Pair p WHERE (p.user1 = :user OR p.user2 = :user) AND p.status = 'ACCEPTED'")
-    Optional<Pair> findActivePairByUser(@Param("user") User user);
-    
-    @Query("SELECT p FROM Pair p WHERE ((p.user1.id = :userId1 AND p.user2.id = :userId2) " +
-           "OR (p.user1.id = :userId2 AND p.user2.id = :userId1))")
-    Optional<Pair> findByUsers(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
+
+    @Query("SELECT p FROM Pair p WHERE (p.senderId = :userId OR p.receiverId = :userId) AND p.status = 'PAIRED'")
+    Optional<Pair> findActivePairByUserId(@Param("userId") String userId);
+
+    @Query("SELECT p FROM Pair p WHERE (p.senderId = :userId OR p.receiverId = :userId) AND p.status = 'REQUEST_SENT'")
+    List<Pair> findAllRequestsByUserId(@Param("userId") String userId);
+
+    @Query("SELECT p FROM Pair p WHERE (p.senderId = :userId1 AND p.receiverId = :userId2) OR (p.senderId = :userId2 AND p.receiverId = :userId1)")
+    Optional<Pair> findExistingPair(@Param("userId1") String userId1, @Param("userId2") String userId2);
 }
