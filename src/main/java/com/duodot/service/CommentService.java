@@ -107,10 +107,10 @@ public class CommentService {
     
     private void validateMemoryAccess(Memory memory, User user) {
         var pair = memory.getPair();
-        if (!pair.getUser1().getId().equals(user.getId()) &&
-            !pair.getUser2().getId().equals(user.getId())) {
-            throw new BadRequestException("You don't have access to this memory");
-        }
+       // if (!pair.getUser1().getId().equals(user.getId()) &&
+         //   !pair.getUser2().getId().equals(user.getId())) {
+          //  throw new BadRequestException("You don't have access to this memory");
+       // }
     }
     
     private CommentDTO convertToDTO(Comment comment) {

@@ -1,211 +1,294 @@
 package com.duodot.service;
 
-import com.duodot.dto.PairRequestDTO;
-import com.duodot.dto.UserDTO;
-import com.duodot.responseBean.ServiceResponseBean;
+import com.duodot.Utils.CommonUtils;
+import com.duodot.constants.CommonConstants;
+import com.duodot.dto.PairDTO;
 import com.duodot.entity.Pair;
-import com.duodot.entity.PairRequest;
 import com.duodot.entity.User;
-import com.duodot.exception.BadRequestException;
-import com.duodot.exception.ResourceNotFoundException;
+import com.duodot.enums.PairNotificationTypeEnum;
+import com.duodot.enums.PairStatusEnum;
 import com.duodot.repository.PairRepository;
-import com.duodot.repository.PairRequestRepository;
 import com.duodot.repository.UserRepository;
+import com.duodot.requestBean.NotificationMessage;
+import com.duodot.responseBean.ServiceResponseBean;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PairService {
-    
-    private final PairRequestRepository pairRequestRepository;
+
     private final PairRepository pairRepository;
     private final UserRepository userRepository;
     private final UserService userService;
-    private final ModelMapper modelMapper;
-    
+    private final NotificationProducer notificationProducer;
+
+    private boolean isAlreadyPaired(User user) {
+        return user.getPairIds() != null && !user.getPairIds().isEmpty();
+    }
+
     @Transactional
-    public ServiceResponseBean sendPairRequest(String receiverUsername, ServiceResponseBean serviceResponseBean) {
-        User sender = userService.getCurrentUser();
-        
-        if (sender.getPaired()) {
-            throw new BadRequestException("You are already paired with someone");
-        }
-        
-        User receiver = userRepository.findByUsernameAndIsDeletedFalse(receiverUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        if (receiver.getPaired()) {
-            throw new BadRequestException("User is already paired");
-        }
-        
-        if (sender.getId().equals(receiver.getId())) {
-            throw new BadRequestException("Cannot send pair request to yourself");
-        }
-        
-        // Check if request already exists
-        var existingRequest = pairRequestRepository.findExistingRequest(
-                sender, receiver, PairRequest.RequestStatus.PENDING
-        );
-        
-        if (existingRequest.isPresent()) {
-            throw new BadRequestException("Pair request already sent");
-        }
-        
-        var pairRequest = PairRequest.builder()
-                .sender(sender)
-                .receiver(receiver)
-                .status(PairRequest.RequestStatus.PENDING)
-                .build();
-        
-        pairRequestRepository.save(pairRequest);
+    public ServiceResponseBean sendPairRequest(String receiverUserId, ServiceResponseBean serviceResponseBean) {
+        try {
+            User sender = userService.getCurrentUser();
+            log.info("User {} sending pair request to username={}", sender.getUserId(), receiverUserId);
 
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Pair request sent successfully");
-        serviceResponseBean.setData(convertToPairRequestDTO(pairRequest));
+            if (isAlreadyPaired(sender)) {
+                serviceResponseBean.setMessage("You are already paired with someone");
+                return serviceResponseBean;
+            }
+
+            Optional<User> receiverOpt = userRepository.findByUserIdAndIsDeletedFalse(receiverUserId);
+            if (receiverOpt.isEmpty()) {
+                serviceResponseBean.setMessage("User not found");
+                return serviceResponseBean;
+            }
+            User receiver = receiverOpt.get();
+
+            if (sender.getUserId().equals(receiver.getUserId())) {
+                serviceResponseBean.setMessage("Cannot send pair request to yourself");
+                return serviceResponseBean;
+            }
+
+            if (isAlreadyPaired(receiver)) {
+                serviceResponseBean.setMessage("User is already paired");
+                return serviceResponseBean;
+            }
+
+            Optional<Pair> existingPair = pairRepository.findExistingPair(sender.getUserId(), receiver.getUserId());
+            if (existingPair.isPresent()) {
+                serviceResponseBean.setMessage("A pair request already exists between you and this user");
+                return serviceResponseBean;
+            }
+
+            String pairId = CommonConstants.INSTANCE.PAIR_PREFIX + CommonUtils.INSTANCE.uniqueIdentifier();
+            Pair pair = Pair.builder()
+                    .pairId(pairId)
+                    .senderId(sender.getUserId())
+                    .receiverId(receiver.getUserId())
+                    .status(PairStatusEnum.REQUEST_SENT)
+                    .createdDate(Calendar.getInstance())
+                    .build();
+
+            pairRepository.save(pair);
+
+            notificationProducer.publish(NotificationMessage.builder()
+                    .senderId(sender.getUserId())
+                    .receiverId(receiver.getUserId())
+                    .actorUsername(sender.getUsername())
+                    .type(PairNotificationTypeEnum.PAIR_REQUEST_SENT)
+                    .build());
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Pair request sent successfully");
+            serviceResponseBean.setData(mapToPairDTO(pair));
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
-    
-    public ServiceResponseBean getPendingRequests(ServiceResponseBean serviceResponseBean) {
-        User user = userService.getCurrentUser();
-        List<PairRequest> requests = pairRequestRepository.findByReceiverAndStatus(
-                user, PairRequest.RequestStatus.PENDING
-        );
 
-        List<PairRequestDTO> pendingRequests = requests.stream()
-                .map(this::convertToPairRequestDTO)
-                .collect(Collectors.toList());
-
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Pending requests retrieved");
-        serviceResponseBean.setData(pendingRequests);
+    public ServiceResponseBean getRequests(ServiceResponseBean serviceResponseBean) {
+        try {
+            User user = userService.getCurrentUser();
+            List<Pair> pairs = pairRepository.findAllRequestsByUserId(user.getUserId());
+            List<PairDTO> result = pairs.stream()
+                    .map(this::mapToPairDTO)
+                    .collect(Collectors.toList());
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Requests retrieved");
+            serviceResponseBean.setData(result);
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
-    
+
     @Transactional
-    public ServiceResponseBean acceptPairRequest(Long requestId, ServiceResponseBean serviceResponseBean) {
-        User receiver = userService.getCurrentUser();
-        
-        PairRequest pairRequest = pairRequestRepository.findById(requestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pair request not found"));
-        
-        if (!pairRequest.getReceiver().getId().equals(receiver.getId())) {
-            throw new BadRequestException("Unauthorized to accept this request");
-        }
-        
-        if (pairRequest.getStatus() != PairRequest.RequestStatus.PENDING) {
-            throw new BadRequestException("Request already processed");
-        }
-        
-        if (receiver.getPaired() || pairRequest.getSender().getPaired()) {
-            throw new BadRequestException("One or both users are already paired");
-        }
-        
-        // Update pair request
-        pairRequest.setStatus(PairRequest.RequestStatus.ACCEPTED);
-        pairRequest.setRespondedAt(LocalDateTime.now());
-        pairRequestRepository.save(pairRequest);
-        
-        // Create pair
-        Pair pair = Pair.builder()
-                .user1(pairRequest.getSender())
-                .user2(receiver)
-                .status(Pair.PairStatus.ACCEPTED)
-                .requestedBy(pairRequest.getSender().getId())
-                .pairedAt(LocalDateTime.now())
-                .build();
-        
-        pairRepository.save(pair);
-        
-        // Update users
-        pairRequest.getSender().setPaired(true);
-        receiver.setPaired(true);
-        userRepository.save(pairRequest.getSender());
-        userRepository.save(receiver);
+    public ServiceResponseBean updateRequestStatus(Long id, String statusStr, ServiceResponseBean serviceResponseBean) {
+        try {
+            PairStatusEnum status;
+            try {
+                status = PairStatusEnum.valueOf(statusStr.toUpperCase());
+            } catch (IllegalArgumentException ex) {
+                serviceResponseBean.setMessage("Invalid status. Allowed values: PAIRED, REJECTED");
+                return serviceResponseBean;
+            }
 
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Pair request accepted");
-        serviceResponseBean.setData(convertToPairRequestDTO(pairRequest));
+            if (status != PairStatusEnum.PAIRED && status != PairStatusEnum.REJECTED) {
+                serviceResponseBean.setMessage("Invalid status. Allowed values: PAIRED, REJECTED");
+                return serviceResponseBean;
+            }
+
+            User receiver = userService.getCurrentUser();
+            log.info("User {} updating pair request id={} to status={}", receiver.getUserId(), id, status);
+
+            Optional<Pair> pairOpt = pairRepository.findById(id);
+            if (pairOpt.isEmpty()) {
+                serviceResponseBean.setMessage("Pair request not found");
+                return serviceResponseBean;
+            }
+            Pair pair = pairOpt.get();
+
+            if (!pair.getReceiverId().equals(receiver.getUserId())) {
+                serviceResponseBean.setMessage("Unauthorized to update this request");
+                return serviceResponseBean;
+            }
+
+            if (pair.getStatus() != PairStatusEnum.REQUEST_SENT) {
+                serviceResponseBean.setMessage("Request already processed");
+                return serviceResponseBean;
+            }
+
+            if (status == PairStatusEnum.PAIRED) {
+                if (isAlreadyPaired(receiver)) {
+                    serviceResponseBean.setMessage("You are already paired");
+                    return serviceResponseBean;
+                }
+
+                User sender = userRepository.findByUserId(pair.getSenderId());
+                if (sender == null) {
+                    serviceResponseBean.setMessage("Sender not found");
+                    return serviceResponseBean;
+                }
+
+                if (isAlreadyPaired(sender)) {
+                    serviceResponseBean.setMessage("The request sender is already paired");
+                    return serviceResponseBean;
+                }
+
+                if (sender.getPairIds() == null) sender.setPairIds(new ArrayList<>());
+                if (receiver.getPairIds() == null) receiver.setPairIds(new ArrayList<>());
+                sender.getPairIds().add(pair.getPairId());
+                receiver.getPairIds().add(pair.getPairId());
+                userRepository.save(sender);
+                userRepository.save(receiver);
+
+                notificationProducer.publish(NotificationMessage.builder()
+                        .senderId(receiver.getUserId())
+                        .receiverId(sender.getUserId())
+                        .actorUsername(receiver.getUsername())
+                        .type(PairNotificationTypeEnum.PAIRED)
+                        .build());
+            } else {
+                User sender = userRepository.findByUserId(pair.getSenderId());
+
+                notificationProducer.publish(NotificationMessage.builder()
+                        .senderId(receiver.getUserId())
+                        .receiverId(pair.getSenderId())
+                        .actorUsername(receiver.getUsername())
+                        .type(PairNotificationTypeEnum.REJECTED)
+                        .build());
+            }
+
+            pair.setStatus(status);
+            pair.setUpdatedDate(Calendar.getInstance());
+            pairRepository.save(pair);
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage(status == PairStatusEnum.PAIRED ? "Pair request accepted" : "Pair request rejected");
+            serviceResponseBean.setData(mapToPairDTO(pair));
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
-    
-    @Transactional
-    public ServiceResponseBean rejectPairRequest(Long requestId, ServiceResponseBean serviceResponseBean) {
-        User receiver = userService.getCurrentUser();
-        
-        PairRequest pairRequest = pairRequestRepository.findById(requestId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pair request not found"));
-        
-        if (!pairRequest.getReceiver().getId().equals(receiver.getId())) {
-            throw new BadRequestException("Unauthorized to reject this request");
-        }
-        
-        if (pairRequest.getStatus() != PairRequest.RequestStatus.PENDING) {
-            throw new BadRequestException("Request already processed");
-        }
-        
-        pairRequest.setStatus(PairRequest.RequestStatus.REJECTED);
-        pairRequest.setRespondedAt(LocalDateTime.now());
-        pairRequestRepository.save(pairRequest);
 
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Pair request rejected");
-        serviceResponseBean.setData(convertToPairRequestDTO(pairRequest));
-        return serviceResponseBean;
-    }
-    
     public ServiceResponseBean getPairedUser(ServiceResponseBean serviceResponseBean) {
-        User currentUser = userService.getCurrentUser();
-        
-        Pair pair = pairRepository.findActivePairByUser(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("No active pair found"));
-        
-        User pairedUser = pair.getUser1().getId().equals(currentUser.getId()) 
-                ? pair.getUser2() 
-                : pair.getUser1();
-
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Paired user retrieved");
-        serviceResponseBean.setData(modelMapper.map(pairedUser, UserDTO.class));
+        try {
+            User currentUser = userService.getCurrentUser();
+            Optional<Pair> pairOpt = pairRepository.findActivePairByUserId(currentUser.getUserId());
+            if (pairOpt.isEmpty()) {
+                serviceResponseBean.setMessage("No active pair found");
+                return serviceResponseBean;
+            }
+            Pair pair = pairOpt.get();
+            String partnerUserId = pair.getSenderId().equals(currentUser.getUserId())
+                    ? pair.getReceiverId()
+                    : pair.getSenderId();
+            User partner = userRepository.findByUserId(partnerUserId);
+            if (partner == null) {
+                serviceResponseBean.setMessage("Partner not found");
+                return serviceResponseBean;
+            }
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Paired user retrieved");
+            serviceResponseBean.setData(userService.toUserDTO(partner));
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
-    
+
     @Transactional
     public ServiceResponseBean unpair(ServiceResponseBean serviceResponseBean) {
-        User currentUser = userService.getCurrentUser();
-        
-        Pair pair = pairRepository.findActivePairByUser(currentUser)
-                .orElseThrow(() -> new ResourceNotFoundException("No active pair found"));
-        
-        // Update users
-        pair.getUser1().setPaired(false);
-        pair.getUser2().setPaired(false);
-        userRepository.save(pair.getUser1());
-        userRepository.save(pair.getUser2());
-        
-        // Delete pair
-        pairRepository.delete(pair);
+        try {
+            User currentUser = userService.getCurrentUser();
+            Optional<Pair> pairOpt = pairRepository.findActivePairByUserId(currentUser.getUserId());
+            if (pairOpt.isEmpty()) {
+                serviceResponseBean.setMessage("No active pair found");
+                return serviceResponseBean;
+            }
+            Pair pair = pairOpt.get();
 
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Unpaired successfully");
-        serviceResponseBean.setData(null);
+            String partnerUserId = pair.getSenderId().equals(currentUser.getUserId())
+                    ? pair.getReceiverId()
+                    : pair.getSenderId();
+
+            User user1 = userRepository.findByUserId(pair.getSenderId());
+            User user2 = userRepository.findByUserId(pair.getReceiverId());
+
+            if (user1 != null) {
+                if (user1.getPairIds() != null) user1.getPairIds().remove(pair.getPairId());
+                userRepository.save(user1);
+            }
+            if (user2 != null) {
+                if (user2.getPairIds() != null) user2.getPairIds().remove(pair.getPairId());
+                userRepository.save(user2);
+            }
+
+            pair.setStatus(PairStatusEnum.UNPAIRED);
+            pair.setUpdatedDate(Calendar.getInstance());
+            pairRepository.save(pair);
+
+            notificationProducer.publish(NotificationMessage.builder()
+                    .senderId(currentUser.getUserId())
+                    .receiverId(partnerUserId)
+                    .actorUsername(currentUser.getUsername())
+                    .type(PairNotificationTypeEnum.UNPAIRED)
+                    .build());
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Unpaired successfully");
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
-    
-    private PairRequestDTO convertToPairRequestDTO(PairRequest pairRequest) {
-        return PairRequestDTO.builder()
-                .id(pairRequest.getId())
-                .sender(modelMapper.map(pairRequest.getSender(), UserDTO.class))
-                .receiver(modelMapper.map(pairRequest.getReceiver(), UserDTO.class))
-                .status(pairRequest.getStatus())
-                .createdAt(pairRequest.getCreatedAt())
-                .respondedAt(pairRequest.getRespondedAt())
+
+    private PairDTO mapToPairDTO(Pair pair) {
+        return PairDTO.builder()
+                .id(pair.getId())
+                .pairId(pair.getPairId())
+                .senderId(pair.getSenderId())
+                .receiverId(pair.getReceiverId())
+                .status(pair.getStatus())
+                .createdDate(pair.getCreatedDate())
+                .updatedDate(pair.getUpdatedDate())
                 .build();
     }
 }

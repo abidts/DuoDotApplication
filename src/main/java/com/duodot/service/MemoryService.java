@@ -33,8 +33,8 @@ public class MemoryService {
     public ServiceResponseBean createMemory(MemoryRequestBean request, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
         
-        Pair pair = pairRepository.findActivePairByUser(currentUser)
-                .orElseThrow(() -> new BadRequestException("You must be paired to create memories"));
+        Pair pair = null; //pairRepository.findActivePairByUser(currentUser)
+               // .orElseThrow(() -> new BadRequestException("You must be paired to create memories"));
         
         Memory memory = Memory.builder()
                 .pair(pair)
@@ -61,8 +61,8 @@ public class MemoryService {
     public ServiceResponseBean getMemories(Pageable pageable, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
         
-        Pair pair = pairRepository.findActivePairByUser(currentUser)
-                .orElseThrow(() -> new BadRequestException("You must be paired to view memories"));
+        Pair pair = null; //pairRepository.findActivePairByUser(currentUser)
+               // .orElseThrow(() -> new BadRequestException("You must be paired to view memories"));
 
         Page<MemoryResponseBean> memories = memoryRepository.findByPairOrderByMemoryDateDesc(pair, pageable)
                 .map(memoryMapper::toResponse);
@@ -148,9 +148,9 @@ public class MemoryService {
     public ServiceResponseBean getTotalMemoryCount(ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
         
-        Pair pair = pairRepository.findActivePairByUser(currentUser)
-                .orElseThrow(() -> new BadRequestException("You must be paired to view memory count"));
-
+        Pair pair = null;//pairRepository.findActivePairByUser(currentUser)
+                //.orElseThrow(() -> new BadRequestException("You must be paired to view memory count"));
+//
         Long count = memoryRepository.countByPair(pair);
         serviceResponseBean.setStatus(Boolean.TRUE);
         serviceResponseBean.setMessage("Total memory count");
@@ -161,9 +161,9 @@ public class MemoryService {
     private void validateMemoryAccess(Memory memory, User user) {
         Pair memoryPair = memory.getPair();
         
-        if (!memoryPair.getUser1().getId().equals(user.getId()) &&
-            !memoryPair.getUser2().getId().equals(user.getId())) {
+       // if (!memoryPair.getUser1().getId().equals(user.getId()) &&
+          //  !memoryPair.getUser2().getId().equals(user.getId())) {
             throw new BadRequestException("You don't have access to this memory");
-        }
+        //}
     }
 }

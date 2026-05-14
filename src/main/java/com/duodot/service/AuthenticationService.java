@@ -17,6 +17,7 @@ import com.duodot.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -70,7 +71,6 @@ public class AuthenticationService {
                     .state(request.getState())
                     .userId(userId)
                     .createdDate(Calendar.getInstance())
-                    .paired(Boolean.FALSE)
                     .pairIds(new ArrayList<>())
                     .accountStatus(UserStatusEnum.VERIFICATION_PENDING.getValue())
                     .build();
@@ -149,25 +149,20 @@ public class AuthenticationService {
                             request.getPassword()
                     )
             );
-        } catch (BadCredentialsException ex) {
-            serviceResponseBean.setMessage("Invalid email or password.");
-            return serviceResponseBean;
-        }
-        
-        var user = userRepository.findByEmail(request.getEmail());
-        if(Objects.nonNull(user)){
-            if (!UserStatusEnum.ACTIVE.getValue().equalsIgnoreCase(user.getAccountStatus())) {
-                throw new BadRequestException("Account is not active. Please complete OTP verification first.");
+
+            var user = userRepository.findByEmail(request.getEmail());
+            if (user == null) {
+                serviceResponseBean.setMessage("User not found.");
+                return serviceResponseBean;
             }
 
-            var userDetails = new org.springframework.security.core.userdetails.User(
-                    user.getEmail(),
-                    user.getPassword(),
-                    java.util.Collections.emptyList()
-            );
+            if (!UserStatusEnum.ACTIVE.getValue().equalsIgnoreCase(user.getAccountStatus())) {
+                serviceResponseBean.setMessage("Account is not active. Please complete OTP verification first.");
+                return serviceResponseBean;
+            }
 
-            var jwtToken = jwtService.generateToken(userDetails);
-            var refreshToken = jwtService.generateRefreshToken(userDetails);
+            var jwtToken = jwtService.generateToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
 
             stringRedisTemplate.opsForValue().set(
                     CommonConstants.INSTANCE.REFRESH_TOKEN_KEY_PREFIX + user.getUserId(),
@@ -185,8 +180,13 @@ public class AuthenticationService {
             serviceResponseBean.setMessage("Login successful");
             serviceResponseBean.setData(authenticationResponseBean);
 
-        }else{
-            serviceResponseBean.setMessage("User not found.");
+        } catch (DisabledException ex) {
+            serviceResponseBean.setMessage("Your account has been disabled.");
+        } catch (BadCredentialsException ex) {
+            serviceResponseBean.setMessage("Invalid email or password.");
+        } catch (Exception e) {
+            log.error("Exception occurred during sign in :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
         }
 
         return serviceResponseBean;

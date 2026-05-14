@@ -1,25 +1,26 @@
 package com.duodot.entity;
 
-import com.duodot.enums.PairStatusEnum;
+import com.duodot.enums.NotificationStatusEnum;
+import com.duodot.enums.PairNotificationTypeEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Calendar;
 
 @Entity
-@Table(name = "pairs")
+@Table(name = "notifications")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Pair {
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "pair_id", unique = true)
-    private String pairId;
+    @Column(name = "notification_id", unique = true)
+    private String notificationId;
 
     @Column(name = "sender_id")
     private String senderId;
@@ -28,14 +29,20 @@ public class Pair {
     private String receiverId;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private PairNotificationTypeEnum type;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "body", columnDefinition = "TEXT")
+    private String body;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private PairStatusEnum status;
+    private NotificationStatusEnum status;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date")
     private Calendar createdDate;
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_date")
-    private Calendar updatedDate;
 }

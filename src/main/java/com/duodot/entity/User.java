@@ -2,23 +2,20 @@ package com.duodot.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
 @Table(name = "users")
-//@Getter
-//@Setter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,14 +52,8 @@ public class User {
 
     private String state;
 
-    //@Column(name = "pin_id")
-    //private String pinId;
-
     @Column(name = "user_id")
     private String userId;
-
-    @Column(name = "is_paired")
-    private Boolean paired = false;
 
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
@@ -70,7 +61,6 @@ public class User {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "pair_ids", columnDefinition = "jsonb")
     private List<String> pairIds = new ArrayList<>();
-
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_date")
@@ -80,4 +70,33 @@ public class User {
     @Column(name = "updated_date")
     private Calendar updatedDate;
 
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return !Boolean.TRUE.equals(isDeleted);
+    }
 }
