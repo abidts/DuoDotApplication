@@ -61,4 +61,22 @@ public class AuthenticationController {
         serviceResponseBean = authenticationService.refreshToken(request, serviceResponseBean);
         return serviceResponseBean;
     }
+
+    @PostMapping("/resend-otp")
+    public ServiceResponseBean resendOtp(
+            @RequestParam String email
+    ) {
+        ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
+        serviceResponseBean = authenticationService.resendOtp(email, serviceResponseBean);
+        return serviceResponseBean;
+    }
+
+    @GetMapping("/confirm-email")
+    public ServiceResponseBean confirmEmail(
+            @RequestParam String email
+    ) {
+        ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
+        serviceResponseBean = authenticationService.confirmEmail(email, serviceResponseBean);
+        return serviceResponseBean;
+    }
 }

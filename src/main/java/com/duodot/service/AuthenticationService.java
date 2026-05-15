@@ -25,10 +25,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -42,6 +45,7 @@ public class AuthenticationService {
     private final RegistrationOtpService registrationOtpService;
     private final OtpNotificationService otpNotificationService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
     
     @Transactional
     public ServiceResponseBean signUp(RegisterRequestBean request, ServiceResponseBean serviceResponseBean) {
@@ -189,6 +193,61 @@ public class AuthenticationService {
             serviceResponseBean.setMessage("User not found.");
         }
 
+        return serviceResponseBean;
+    }
+
+    public ServiceResponseBean resendOtp(String email, ServiceResponseBean serviceResponseBean) {
+        try {
+            log.info("Resend OTP request for email={}", email);
+            Optional<User> userOpt = userRepository.findByEmailAndIsDeletedFalse(email);
+            if (userOpt.isEmpty()) {
+                serviceResponseBean.setMessage("No user found with this email");
+                return serviceResponseBean;
+            }
+            User user = userOpt.get();
+
+            if (UserStatusEnum.ACTIVE.getValue().equalsIgnoreCase(user.getAccountStatus())) {
+                serviceResponseBean.setMessage("Account is already verified");
+                return serviceResponseBean;
+            }
+
+            String otp = registrationOtpService.generateAndStoreOtp(user.getUserId());
+            otpNotificationService.sendRegistrationOtp(
+                    user.getEmail(),
+                    user.getCountryCode(),
+                    user.getPhoneNumber(),
+                    otp,
+                    registrationOtpService.getOtpValidityMinutes()
+            );
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("OTP resent successfully. OTP is valid for "
+                    + registrationOtpService.getOtpValidityMinutes() + " minutes.");
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
+        return serviceResponseBean;
+    }
+
+    public ServiceResponseBean confirmEmail(String email, ServiceResponseBean serviceResponseBean) {
+        try {
+            log.info("Confirming email={}", email);
+            Optional<User> userOpt = userRepository.findByEmailAndIsDeletedFalse(email);
+            
+            if (userOpt.isPresent()) {
+                ObjectNode data = objectMapper.createObjectNode();
+                data.put("account_status", userOpt.get().getAccountStatus());
+                serviceResponseBean.setStatus(Boolean.TRUE);
+                serviceResponseBean.setMessage("User found");
+                serviceResponseBean.setData(data);
+            } else {
+                serviceResponseBean.setMessage("No user found with this email");
+            }
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
         return serviceResponseBean;
     }
 
