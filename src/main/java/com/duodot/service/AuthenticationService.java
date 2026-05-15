@@ -75,6 +75,7 @@ public class AuthenticationService {
                     .userId(userId)
                     .createdDate(Calendar.getInstance())
                     .paired(Boolean.FALSE)
+                    .isDeleted(Boolean.FALSE)
                     .pairIds(new ArrayList<>())
                     .accountStatus(UserStatusEnum.VERIFICATION_PENDING.getValue())
                     .build();
