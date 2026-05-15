@@ -9,7 +9,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
 
-      # Database (pass components individually; build JDBC URL in Spring config)
+      # Database
       - key: DB_HOST
         fromDatabase:
           name: duodot-db
@@ -48,6 +48,37 @@ services:
           name: duodot-redis
           property: port
 
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: duodot-redis
+          property: password
+
+      # RabbitMQ (internal private service)
+      - key: RABBITMQ_HOST
+        fromService:
+          type: pserv
+          name: duodot-rabbitmq
+          property: host
+
+      - key: RABBITMQ_PORT
+        value: "5672"
+
+      - key: RABBITMQ_USERNAME
+        value: duodot
+
+      - key: RABBITMQ_PASSWORD
+        sync: false  # set in Render dashboard; must match RABBITMQ_DEFAULT_PASS on duodot-rabbitmq
+
+      # Firebase — set FIREBASE_CREDENTIALS_JSON_BASE64 in Render dashboard
+      # Generate with: base64 -i firebase-service-account.json | tr -d '\n'
+      - key: FIREBASE_CREDENTIALS_JSON_BASE64
+        sync: false
+
+      # File uploads (ephemeral on free tier — files lost on redeploy)
+      - key: FILE_UPLOAD_DIR
+        value: /tmp/uploads
+
       # Secrets
       - key: JWT_SECRET
         generateValue: true
@@ -59,6 +90,20 @@ services:
         sync: false
 
     autoDeploy: true
+
+  # RabbitMQ private service — not accessible from the internet
+  - type: pserv
+    name: duodot-rabbitmq
+    runtime: docker
+    plan: free
+    region: frankfurt
+    image:
+      url: docker.io/library/rabbitmq:3-alpine
+    envVars:
+      - key: RABBITMQ_DEFAULT_USER
+        value: duodot
+      - key: RABBITMQ_DEFAULT_PASS
+        sync: false  # set in Render dashboard; must match RABBITMQ_PASSWORD on duodot web service
 
   - type: redis
     name: duodot-redis
