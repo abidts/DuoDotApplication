@@ -1,6 +1,6 @@
 package com.duodot.controller;
 
-import com.duodot.dto.UserDTO;
+import com.duodot.requestBean.UserRequestBean;
 import com.duodot.responseBean.ServiceResponseBean;
 import com.duodot.service.UserService;
 import jakarta.validation.Valid;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
     
@@ -25,14 +25,14 @@ public class UserController {
     
     @PutMapping("/profile")
     public ServiceResponseBean updateProfile(
-            @Valid @RequestBody UserDTO userDTO
+            @Valid @RequestBody UserRequestBean userRequestBean
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
-        serviceResponseBean = userService.updateProfile(userDTO, serviceResponseBean);
+        serviceResponseBean = userService.updateProfile(userRequestBean, serviceResponseBean);
         return serviceResponseBean;
     }
     
-    @PostMapping(value = "/profile/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/profile/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean uploadProfilePicture(
             @RequestParam("file") MultipartFile file
     ) {

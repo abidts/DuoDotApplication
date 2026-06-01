@@ -1,52 +1,40 @@
 package com.duodot.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.duodot.entity.MediaFile;
 import com.duodot.entity.Memory;
 import com.duodot.exception.FileStorageException;
 import com.duodot.repository.MediaFileRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
 
     private final MediaFileRepository mediaFileRepository;
-
-    @Value("${application.file.upload-dir}")
-    private String uploadDir;
-
-    public FileStorageService(MediaFileRepository mediaFileRepository) {
-        this.mediaFileRepository = mediaFileRepository;
-    }
+    private final Cloudinary cloudinary;
 
     public String uploadFile(MultipartFile file, String folder) {
         try {
-            String fileName = generateFileName(file.getOriginalFilename());
-            Path targetDir = Paths.get(uploadDir, folder);
-            
-            // Create directories if they don't exist
-            if (!Files.exists(targetDir)) {
-                Files.createDirectories(targetDir);
-            }
-            
-            Path targetPath = targetDir.resolve(fileName);
-            Files.copy(file.getInputStream(), targetPath);
-            
-            // Return relative path for storage
-            return "/uploads/" + folder + "/" + fileName;
-            
+            Map<?, ?> result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "resource_type", "auto"
+                    )
+            );
+            return (String) result.get("secure_url");
         } catch (IOException e) {
-            log.error("Error uploading file", e);
+            log.error("Error uploading file to Cloudinary", e);
             throw new FileStorageException("Failed to upload file: " + e.getMessage());
         }
     }
@@ -69,20 +57,8 @@ public class FileStorageService {
         });
     }
 
-    private String generateFileName(String originalFilename) {
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        return UUID.randomUUID().toString() + extension;
-    }
-
     private MediaFile.FileType determineFileType(String contentType) {
-        if (contentType == null) {
-            return MediaFile.FileType.IMAGE;
-        }
-
-        if (contentType.startsWith("video/")) {
+        if (contentType != null && contentType.startsWith("video/")) {
             return MediaFile.FileType.VIDEO;
         }
         return MediaFile.FileType.IMAGE;

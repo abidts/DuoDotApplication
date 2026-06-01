@@ -2,8 +2,11 @@ package com.duodot.service;
 
 import com.duodot.dto.UserDTO;
 import com.duodot.responseBean.ServiceResponseBean;
+import com.duodot.responseBean.UserResponseBean;
 import com.duodot.entity.User;
 import com.duodot.repository.UserRepository;
+import com.duodot.requestBean.UserRequestBean;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -38,9 +41,21 @@ public class UserService {
     public ServiceResponseBean getUserProfile(ServiceResponseBean serviceResponseBean) {
         try {
             User user = getCurrentUser();
+            UserResponseBean userResponse = new UserResponseBean();
+            userResponse.setUserId(user.getUserId());
+            userResponse.setUsername(user.getUsername());
+            userResponse.setFirstname(user.getFirstName());
+            userResponse.setLastname(user.getLastName());
+            userResponse.setEmail(user.getEmail());
+            userResponse.setCountrycode(user.getCountryCode());
+            userResponse.setPhoneNumber(user.getPhoneNumber());
+            userResponse.setProfilePicture(user.getProfilePicture());
+            userResponse.setCity(user.getCity());
+            userResponse.setIsPaired(user.getPairIds() != null && !user.getPairIds().isEmpty());
+            userResponse.setIsDeleted(user.getIsDeleted());
             serviceResponseBean.setStatus(Boolean.TRUE);
             serviceResponseBean.setMessage("Profile retrieved successfully");
-            serviceResponseBean.setData(toUserDTO(user));
+            serviceResponseBean.setData(userResponse);
         } catch (Exception e) {
             log.error("Exception occurred :: {}", e);
             serviceResponseBean.setMessage(e.getLocalizedMessage());
@@ -51,14 +66,21 @@ public class UserService {
     public ServiceResponseBean searchUserByUsername(String username, ServiceResponseBean serviceResponseBean) {
         try {
             log.info("Searching user by username={}", username);
-            Optional<User> userOpt = userRepository.findByUserIdAndIsDeletedFalse(username);
+            Optional<User> userOpt = userRepository.findByUsernameAndIsDeletedFalse(username);
+           
             if (userOpt.isEmpty()) {
                 serviceResponseBean.setMessage("User not found with username: " + username);
                 return serviceResponseBean;
             }
+            User foundUser = userOpt.get();
+            UserResponseBean userResponseBean = new UserResponseBean();
+            userResponseBean.setUserId(foundUser.getUserId());
+            userResponseBean.setUsername(foundUser.getUsername());
+            userResponseBean.setFirstname(foundUser.getFirstName());
+            userResponseBean.setLastname(foundUser.getLastName());
             serviceResponseBean.setStatus(Boolean.TRUE);
             serviceResponseBean.setMessage("User found");
-            serviceResponseBean.setData(toUserDTO(userOpt.get()));
+            serviceResponseBean.setData(userResponseBean);
         } catch (Exception e) {
             log.error("Exception occurred :: {}", e);
             serviceResponseBean.setMessage(e.getLocalizedMessage());
@@ -67,19 +89,18 @@ public class UserService {
     }
 
     @Transactional
-    public ServiceResponseBean updateProfile(UserDTO userDTO, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean updateProfile(UserRequestBean userRequestBean, ServiceResponseBean serviceResponseBean) {
         try {
-            log.info("Update profile request={}", userDTO);
+            log.info("Update profile request={}", userRequestBean);
             User user = getCurrentUser();
-            user.setFirstName(userDTO.getFirstName());
-            user.setLastName(userDTO.getLastName());
-            user.setPhoneNumber(userDTO.getPhoneNumber());
-            user.setCity(userDTO.getCity());
-            user.setState(userDTO.getState());
+            user.setFirstName(userRequestBean.getFirstName() != null ? userRequestBean.getFirstName() : user.getFirstName());
+            user.setLastName(userRequestBean.getLastName() != null ? userRequestBean.getLastName() : user.getLastName());
+            user.setPhoneNumber(userRequestBean.getPhoneNumber() != null ? userRequestBean.getPhoneNumber() : user.getPhoneNumber());
+            user.setCity(userRequestBean.getCity() != null ? userRequestBean.getCity() : user.getCity());
+            user.setState(userRequestBean.getState() != null ? userRequestBean.getState() : user.getState());
             userRepository.save(user);
-            serviceResponseBean.setStatus(Boolean.TRUE);
+            this.getUserProfile(serviceResponseBean);
             serviceResponseBean.setMessage("Profile updated successfully");
-            serviceResponseBean.setData(toUserDTO(user));
         } catch (Exception e) {
             log.error("Exception occurred :: {}", e);
             serviceResponseBean.setMessage(e.getLocalizedMessage());
@@ -94,9 +115,8 @@ public class UserService {
             String fileUrl = fileStorageService.uploadFile(file, "profile-pictures");
             user.setProfilePicture(fileUrl);
             userRepository.save(user);
-            serviceResponseBean.setStatus(Boolean.TRUE);
+            this.getUserProfile(serviceResponseBean);
             serviceResponseBean.setMessage("Profile picture uploaded successfully");
-            serviceResponseBean.setData(toUserDTO(user));
         } catch (Exception e) {
             log.error("Exception occurred :: {}", e);
             serviceResponseBean.setMessage(e.getLocalizedMessage());
