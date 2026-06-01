@@ -21,6 +21,10 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void initialize() {
+        if (credentialsPath == null || credentialsPath.isBlank()) {
+            log.warn("Firebase credentials path not configured — push notifications disabled");
+            return;
+        }
         try {
             if (FirebaseApp.getApps().isEmpty()) {
                 InputStream serviceAccount = new FileInputStream(credentialsPath);

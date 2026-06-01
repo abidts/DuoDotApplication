@@ -151,16 +151,16 @@ spring:
       timeout: 2s
 
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5671}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${RABBITMQ_HOST:warthog-01.lmq.cloudamqp.com}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:eelrljpx}
+    password: ${RABBITMQ_PASSWORD:Udnf6CacZlQZDapo7srJL_3II1coi7ea}
     virtual-host: ${RABBITMQ_VHOST:/}
     ssl:
       enabled: true
 
 firebase:
-  credentials-path: ${FIREBASE_CREDENTIALS_PATH}
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
