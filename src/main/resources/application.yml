@@ -102,6 +102,11 @@ spring:
 firebase:
   credentials-path: firebase-service-account.json
 
+cloudinary:
+  cloud-name: dveg0ai0n
+  api-key: 427852115872431
+  api-secret: KpLhFzB6h-6gxu1W3KYUJc8_z_w
+
 application:
   file:
     upload-dir: ./uploads
@@ -153,6 +158,11 @@ spring:
 
 firebase:
   credentials-path: ${FIREBASE_CREDENTIALS_PATH}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
 
 application:
   file:

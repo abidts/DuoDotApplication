@@ -70,10 +70,6 @@ public class User implements UserDetails {
     @Column(name = "updated_date")
     private Calendar updatedDate;
 
-    @Override
-    public String getUsername() {
-        return email;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
