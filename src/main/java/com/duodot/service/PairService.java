@@ -85,7 +85,7 @@ public class PairService {
                     .senderId(sender.getUserId())
                     .receiverId(receiver.getUserId())
                     .actorUsername(sender.getUsername())
-                    .type(PairNotificationTypeEnum.REQUEST_SENT)
+                    .type(PairNotificationTypeEnum.PAIR_REQUEST_SENT)
                     .build());
 
             serviceResponseBean.setStatus(Boolean.TRUE);

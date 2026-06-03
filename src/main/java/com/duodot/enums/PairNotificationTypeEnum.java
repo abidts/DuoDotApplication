@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public enum PairNotificationTypeEnum {
-    REQUEST_SENT("PAIR REQUEST SENT"),
+    PAIR_REQUEST_SENT("PAIR REQUEST SENT"),
     PAIRED("PAIRED"),
     REJECTED("REJECTED"),
     ACCEPTED("ACCEPTED"),
