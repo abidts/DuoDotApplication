@@ -1,0 +1,371 @@
+{
+  "info": {
+    "name": "DuoDot API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/signup", "host": ["{{baseUrl}}"], "path": ["auth", "signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"rashidbaba\",\n  \"email\": \"rashid@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"Rashid\",\n  \"lastName\": \"Baba\",\n  \"countryCode\": \"+92\",\n  \"phoneNumber\": \"3001234567\",\n  \"city\": \"Karachi\",\n  \"state\": \"Sindh\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Confirm Sign Up (OTP)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/confirm-signup", "host": ["{{baseUrl}}"], "path": ["auth", "confirm-signup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/signin", "host": ["{{baseUrl}}"], "path": ["auth", "signin"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rashid@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Sign Out",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/signout?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signout"],
+              "query": [{ "key": "userId", "value": "{{userId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh-token", "host": ["{{baseUrl}}"], "path": ["auth", "refresh-token"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-otp?email=rashid@example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-otp"],
+              "query": [{ "key": "email", "value": "rashid@example.com" }]
+            }
+          }
+        },
+        {
+          "name": "Confirm Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/confirm-email?email=rashid@example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "confirm-email"],
+              "query": [{ "key": "email", "value": "rashid@example.com" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Rashid\",\n  \"lastName\": \"Baba\",\n  \"phoneNumber\": \"3001234567\",\n  \"city\": \"Lahore\",\n  \"state\": \"Punjab\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Upload Profile Picture",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/profile/picture", "host": ["{{baseUrl}}"], "path": ["users", "profile", "picture"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Search User by Username",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/search?username=rashidbaba",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "search"],
+              "query": [{ "key": "username", "value": "rashidbaba" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/account", "host": ["{{baseUrl}}"], "path": ["users", "account"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pairs",
+      "item": [
+        {
+          "name": "Send Pair Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pairs/request?userId=USR-abc123",
+              "host": ["{{baseUrl}}"],
+              "path": ["pairs", "request"],
+              "query": [{ "key": "userId", "value": "USR-abc123" }]
+            }
+          }
+        },
+        {
+          "name": "Get Pair Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/pairs/requests", "host": ["{{baseUrl}}"], "path": ["pairs", "requests"] }
+          }
+        },
+        {
+          "name": "Accept / Reject Pair Request",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pairs/requests/1?status=ACCEPTED",
+              "host": ["{{baseUrl}}"],
+              "path": ["pairs", "requests", "1"],
+              "query": [{ "key": "status", "value": "ACCEPTED" }]
+            }
+          }
+        },
+        {
+          "name": "Get Partner",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/pairs/partner", "host": ["{{baseUrl}}"], "path": ["pairs", "partner"] }
+          }
+        },
+        {
+          "name": "Unpair",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/pairs/unpair", "host": ["{{baseUrl}}"], "path": ["pairs", "unpair"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memories (DISABLED - @RestController commented out)",
+      "item": [
+        {
+          "name": "Create Memory",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "memoryDate", "value": "2026-06-03", "type": "text" },
+                { "key": "description", "value": "Our first trip", "type": "text" },
+                { "key": "location", "value": "Karachi", "type": "text" },
+                { "key": "files", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Memories (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/memories?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "memories"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Memory by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1"] }
+          }
+        },
+        {
+          "name": "Update Memory",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memoryDate\": \"2026-06-03\",\n  \"description\": \"Updated description\",\n  \"location\": \"Lahore\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Media to Memory",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1/media", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1", "media"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "files", "type": "file", "src": "" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Memory",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1"] }
+          }
+        },
+        {
+          "name": "Get Total Memory Count",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/count", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "count"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments (DISABLED - @RestController commented out)",
+      "item": [
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/memories/1/comments?description=Nice memory!",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "memories", "1", "comments"],
+              "query": [{ "key": "description", "value": "Nice memory!" }]
+            }
+          }
+        },
+        {
+          "name": "Get Comments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1", "comments"] }
+          }
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/memories/1/comments/5?description=Updated comment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "memories", "1", "comments", "5"],
+              "query": [{ "key": "description", "value": "Updated comment" }]
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/memories/1/comments/5", "host": ["{{baseUrl}}"], "path": ["api", "v1", "memories", "1", "comments", "5"] }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -29,9 +29,9 @@ public class PairController {
         return serviceResponseBean;
     }
 
-    @PutMapping("/requests/{id}")
+    @PutMapping("/requests")
     public ServiceResponseBean updateRequestStatus(
-            @PathVariable Long pairId,
+            @RequestParam String pairId,
             @RequestParam String status
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();

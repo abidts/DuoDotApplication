@@ -85,7 +85,7 @@ public class PairService {
                     .senderId(sender.getUserId())
                     .receiverId(receiver.getUserId())
                     .actorUsername(sender.getUsername())
-                    .type(PairNotificationTypeEnum.PAIR_REQUEST_SENT)
+                    .type(PairNotificationTypeEnum.REQUEST_SENT)
                     .build());
 
             serviceResponseBean.setStatus(Boolean.TRUE);
@@ -116,25 +116,25 @@ public class PairService {
     }
 
     @Transactional
-    public ServiceResponseBean updateRequestStatus(Long id, String statusStr, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean updateRequestStatus(String pairId, String statusStr, ServiceResponseBean serviceResponseBean) {
         try {
             PairStatusEnum status;
             try {
                 status = PairStatusEnum.valueOf(statusStr.toUpperCase());
             } catch (IllegalArgumentException ex) {
-                serviceResponseBean.setMessage("Invalid status. Allowed values: PAIRED, REJECTED");
+                serviceResponseBean.setMessage("Invalid status. Allowed values: ACCEPTED, REJECTED");
                 return serviceResponseBean;
             }
 
-            if (status != PairStatusEnum.PAIRED && status != PairStatusEnum.REJECTED) {
-                serviceResponseBean.setMessage("Invalid status. Allowed values: PAIRED, REJECTED");
+            if (status != PairStatusEnum.ACCEPTED && status != PairStatusEnum.REJECTED) {
+                serviceResponseBean.setMessage("Invalid status. Allowed values: ACCEPTED, REJECTED");
                 return serviceResponseBean;
             }
 
             User receiver = userService.getCurrentUser();
-            log.info("User {} updating pair request id={} to status={}", receiver.getUserId(), id, status);
+            log.info("User {} updating pair request id={} to status={}", receiver.getUserId(), pairId, status);
 
-            Optional<Pair> pairOpt = pairRepository.findById(id);
+            Optional<Pair> pairOpt = pairRepository.findByPairId(pairId);
             if (pairOpt.isEmpty()) {
                 serviceResponseBean.setMessage("Pair request not found");
                 return serviceResponseBean;
@@ -151,7 +151,7 @@ public class PairService {
                 return serviceResponseBean;
             }
 
-            if (status == PairStatusEnum.PAIRED) {
+            if (status == PairStatusEnum.ACCEPTED) {
                 if (isAlreadyPaired(receiver)) {
                     serviceResponseBean.setMessage("You are already paired");
                     return serviceResponseBean;
@@ -179,7 +179,7 @@ public class PairService {
                         .senderId(receiver.getUserId())
                         .receiverId(sender.getUserId())
                         .actorUsername(receiver.getUsername())
-                        .type(PairNotificationTypeEnum.PAIRED)
+                        .type(PairNotificationTypeEnum.ACCEPTED)
                         .build());
             } else {
                 User sender = userRepository.findByUserId(pair.getSenderId());
@@ -197,7 +197,7 @@ public class PairService {
             pairRepository.save(pair);
 
             serviceResponseBean.setStatus(Boolean.TRUE);
-            serviceResponseBean.setMessage(status == PairStatusEnum.PAIRED ? "Pair request accepted" : "Pair request rejected");
+            serviceResponseBean.setMessage(status == PairStatusEnum.ACCEPTED ? "Pair request accepted" : "Pair request rejected");
             serviceResponseBean.setData(mapToPairDTO(pair));
         } catch (Exception e) {
             log.error("Exception occurred :: {}", e);
