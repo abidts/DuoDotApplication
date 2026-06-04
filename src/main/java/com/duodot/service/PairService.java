@@ -98,6 +98,50 @@ public class PairService {
         return serviceResponseBean;
     }
 
+    @Transactional
+    public ServiceResponseBean cancelPairRequest(String pairId, ServiceResponseBean serviceResponseBean) {
+        try {
+            User sender = userService.getCurrentUser();
+            log.info("User {} cancelling pair request id={}", sender.getUserId(), pairId);
+
+            Optional<Pair> pairOpt = pairRepository.findByPairId(pairId);
+            if (pairOpt.isEmpty()) {
+                serviceResponseBean.setMessage("Pair request not found");
+                return serviceResponseBean;
+            }
+            Pair pair = pairOpt.get();
+
+            if (!pair.getSenderId().equals(sender.getUserId())) {
+                serviceResponseBean.setMessage("Unauthorized to cancel this request");
+                return serviceResponseBean;
+            }
+
+            if (pair.getStatus() != PairStatusEnum.REQUEST_SENT) {
+                serviceResponseBean.setMessage("Request already processed");
+                return serviceResponseBean;
+            }
+
+            pair.setStatus(PairStatusEnum.CANCELLED);
+            pair.setUpdatedDate(Calendar.getInstance());
+            pairRepository.save(pair);
+
+            notificationProducer.publish(NotificationMessage.builder()
+                    .senderId(sender.getUserId())
+                    .receiverId(pair.getReceiverId())
+                    .actorUsername(sender.getUsername())
+                    .type(PairNotificationTypeEnum.CANCELLED)
+                    .build());
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Pair request cancelled");
+            serviceResponseBean.setData(mapToPairDTO(pair));
+        } catch (Exception e) {
+            log.error("Exception occurred :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
+        }
+        return serviceResponseBean;
+    }
+
     public ServiceResponseBean getRequests(ServiceResponseBean serviceResponseBean) {
         try {
             User user = userService.getCurrentUser();
@@ -192,7 +236,7 @@ public class PairService {
                         .build());
             }
 
-            pair.setStatus(status);
+            pair.setStatus(status == PairStatusEnum.ACCEPTED ? PairStatusEnum.PAIRED : status);
             pair.setUpdatedDate(Calendar.getInstance());
             pairRepository.save(pair);
 

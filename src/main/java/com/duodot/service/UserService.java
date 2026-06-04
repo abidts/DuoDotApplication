@@ -29,7 +29,8 @@ public class UserService {
 
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return (User) authentication.getPrincipal();
+        User principal = (User) authentication.getPrincipal();
+        return userRepository.findByUserId(principal.getUserId());
     }
 
     public UserDTO toUserDTO(User user) {

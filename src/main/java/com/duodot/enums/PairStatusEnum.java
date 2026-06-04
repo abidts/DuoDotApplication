@@ -12,6 +12,7 @@ public enum PairStatusEnum {
     PAIRED("PAIRED"),
     ACCEPTED("ACCEPTED"),
     REJECTED("REJECTED"),
+    CANCELLED("CANCELLED"),
     UNPAIRED("UNPAIRED");
 
     @Getter

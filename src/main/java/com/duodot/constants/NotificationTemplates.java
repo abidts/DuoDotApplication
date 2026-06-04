@@ -12,6 +12,7 @@ public class NotificationTemplates {
             case PAIRED            -> "Pair Request Accepted";
             case ACCEPTED          -> "Pair Request Accepted";
             case REJECTED          -> "Pair Request Declined";
+            case CANCELLED         -> "Pair Request Cancelled";
             case UNPAIRED          -> "Pair Ended";
         };
     }
@@ -22,6 +23,7 @@ public class NotificationTemplates {
             case PAIRED            -> "You are now paired!";
             case ACCEPTED          -> "Your pair request was accepted";
             case REJECTED          -> "Your pair request was declined";
+            case CANCELLED         -> "The pair request has been cancelled";
             case UNPAIRED          -> "Your partner has ended the pair";
         };
     }

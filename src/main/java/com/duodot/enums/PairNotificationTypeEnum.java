@@ -12,6 +12,7 @@ public enum PairNotificationTypeEnum {
     PAIRED("PAIRED"),
     REJECTED("REJECTED"),
     ACCEPTED("ACCEPTED"),
+    CANCELLED("CANCELLED"),
     UNPAIRED("UNPAIRED");
 
     @Getter

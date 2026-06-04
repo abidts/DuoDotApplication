@@ -22,6 +22,15 @@ public class PairController {
         return serviceResponseBean;
     }
 
+    @DeleteMapping("/requests")
+    public ServiceResponseBean cancelPairRequest(
+            @RequestParam String pairId
+    ) {
+        ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
+        serviceResponseBean = pairService.cancelPairRequest(pairId, serviceResponseBean);
+        return serviceResponseBean;
+    }
+
     @GetMapping("/requests")
     public ServiceResponseBean getRequests() {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();

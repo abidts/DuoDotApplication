@@ -18,7 +18,7 @@ public interface PairRepository extends JpaRepository<Pair, Long> {
     @Query("SELECT p FROM Pair p WHERE (p.senderId = :userId OR p.receiverId = :userId) AND p.status = 'REQUEST_SENT'")
     List<Pair> findAllRequestsByUserId(@Param("userId") String userId);
 
-    @Query("SELECT p FROM Pair p WHERE (p.senderId = :userId1 AND p.receiverId = :userId2) OR (p.senderId = :userId2 AND p.receiverId = :userId1)")
+    @Query("SELECT p FROM Pair p WHERE ((p.senderId = :userId1 AND p.receiverId = :userId2) OR (p.senderId = :userId2 AND p.receiverId = :userId1)) AND p.status != 'CANCELLED'")
     Optional<Pair> findExistingPair(@Param("userId1") String userId1, @Param("userId2") String userId2);
 
     Optional<Pair> findByPairId(String pairId);
