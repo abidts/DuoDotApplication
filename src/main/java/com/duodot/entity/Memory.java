@@ -39,9 +39,11 @@ public class Memory {
     
     private String location;
     
+    @Builder.Default
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaFile> mediaFiles = new ArrayList<>();
-    
+
+    @Builder.Default
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
     
