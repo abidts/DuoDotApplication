@@ -5,8 +5,8 @@ import com.duodot.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-//@RestController
-@RequestMapping("/api/v1/memories/{memoryId}/comments")
+@RestController
+@RequestMapping("/memories/{memoryId}/comments")
 @RequiredArgsConstructor
 public class CommentController {
     
