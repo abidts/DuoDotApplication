@@ -3,7 +3,9 @@ package com.duodot.controller;
 import com.duodot.requestBean.MemoryRequestBean;
 import com.duodot.responseBean.ServiceResponseBean;
 import com.duodot.service.MemoryService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,14 +22,14 @@ import java.util.List;
 public class MemoryController {
 
     private final MemoryService memoryService;
-    private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean createMemory(
-            @RequestParam("request") String requestJson,
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = MemoryRequestBean.class)))
+            @RequestPart("request") MemoryRequestBean request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) throws Exception {
-        MemoryRequestBean request = objectMapper.readValue(requestJson, MemoryRequestBean.class);
+    ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.createMemory(request, files, serviceResponseBean);
         return serviceResponseBean;
