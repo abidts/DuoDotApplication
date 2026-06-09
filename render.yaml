@@ -101,7 +101,7 @@ services:
 
 databases:
   - name: duodot-db
-    databaseName: duodot
-    user: duodot
+    databaseName: duodot-db
+    user: duodot_db_user
     plan: free
     region: frankfurt
