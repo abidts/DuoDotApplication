@@ -1,13 +1,15 @@
 package com.duodot.repository;
 
 import com.duodot.entity.Comment;
-import com.duodot.entity.Memory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-    List<Comment> findByMemoryOrderByCreatedAtDesc(Memory memory);
+    Optional<Comment> findByCommentId(String commentId);
+    List<Comment> findByMemoryIdOrderByCreatedAtDesc(String memoryId);
+    void deleteByMemoryId(String memoryId);
 }

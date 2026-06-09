@@ -5,37 +5,47 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.util.Calendar;
+import java.util.UUID;
 
 @Entity
 @Table(name = "comments")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Comment {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "memory_id", nullable = false)
-    private Memory memory;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User commenter;
-    
+
+    @Column(name = "comment_id", unique = true)
+    private String commentId;
+
+    @Column(name = "memory_id", nullable = false)
+    private String memoryId;
+
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
-    
+
     @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-    
+    private Calendar createdAt;
+
     @UpdateTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Calendar updatedAt;
+
+    @PrePersist
+    public void generateCommentId() {
+        if (commentId == null) {
+            commentId = "cmnt_" + UUID.randomUUID().toString().replace("-", "");
+        }
+    }
 }

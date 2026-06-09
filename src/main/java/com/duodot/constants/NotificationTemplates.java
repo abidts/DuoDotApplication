@@ -14,6 +14,7 @@ public class NotificationTemplates {
             case REJECTED          -> "Pair Request Declined";
             case CANCELLED         -> "Pair Request Cancelled";
             case UNPAIRED          -> "Pair Ended";
+            case COMMENT_ADDED     -> "New Comment";
         };
     }
 
@@ -25,6 +26,7 @@ public class NotificationTemplates {
             case REJECTED          -> "Your pair request was declined";
             case CANCELLED         -> "The pair request has been cancelled";
             case UNPAIRED          -> "Your partner has ended the pair";
+            case COMMENT_ADDED     -> actorUsername + " commented on a memory";
         };
     }
 }

@@ -5,17 +5,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.util.Calendar;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentDTO {
-    private Long id;
-    private String commenterName;
-    private Long commenterId;
+    private String commentId;
+    private String memoryId;
+    private String userId;
     private String description;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private Calendar createdAt;
+    private Calendar updatedAt;
 }

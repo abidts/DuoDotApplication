@@ -46,7 +46,7 @@ public class FileStorageService {
             MediaFile.FileType fileType = determineFileType(file.getContentType());
 
             MediaFile mediaFile = MediaFile.builder()
-                    .memory(memory)
+                    .memoryId(memory.getMemoryId())
                     .fileUrl(fileUrl)
                     .fileName(file.getOriginalFilename())
                     .fileType(fileType)

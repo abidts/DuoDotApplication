@@ -1,56 +1,50 @@
 package com.duodot.service;
 
 import com.duodot.dto.CommentDTO;
-import com.duodot.dto.MediaFileDTO;
+import com.duodot.repository.CommentRepository;
 import com.duodot.responseBean.MemoryResponseBean;
 import com.duodot.entity.Comment;
-import com.duodot.entity.MediaFile;
 import com.duodot.entity.Memory;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class MemoryMapper {
-    
+
+    private final CommentRepository commentRepository;
+
     public MemoryResponseBean toResponse(Memory memory) {
+        List<CommentDTO> comments = commentRepository
+                .findByMemoryIdOrderByCreatedAtDesc(memory.getMemoryId())
+                .stream()
+                .map(this::toCommentDTO)
+                .collect(Collectors.toList());
+
         return MemoryResponseBean.builder()
                 .id(memory.getId())
-                .creatorName(memory.getCreator().getFirstName() + " " + memory.getCreator().getLastName())
-                .creatorId(memory.getCreator().getId())
+                .memoryId(memory.getMemoryId())
+                .pairId(memory.getPairId())
+                .userId(memory.getUserId())
                 .memoryDate(memory.getMemoryDate())
                 .description(memory.getDescription())
                 .location(memory.getLocation())
-                .mediaFiles(memory.getMediaFiles().stream()
-                        .map(this::toMediaFileDTO)
-                        .collect(Collectors.toList()))
-                .comments(memory.getComments().stream()
-                        .map(this::toCommentDTO)
-                        .collect(Collectors.toList()))
-                .lastUpdatedByName(memory.getLastUpdatedBy() != null 
-                        ? memory.getLastUpdatedBy().getFirstName() + " " + memory.getLastUpdatedBy().getLastName()
-                        : null)
+                .mediaFiles(memory.getMediaFiles())
+                .comments(comments)
+                .lastUpdatedBy(memory.getLastUpdatedBy())
                 .createdAt(memory.getCreatedAt())
                 .updatedAt(memory.getUpdatedAt())
                 .build();
     }
-    
-    private MediaFileDTO toMediaFileDTO(MediaFile mediaFile) {
-        return MediaFileDTO.builder()
-                .id(mediaFile.getId())
-                .fileUrl(mediaFile.getFileUrl())
-                .fileName(mediaFile.getFileName())
-                .fileType(mediaFile.getFileType())
-                .fileSize(mediaFile.getFileSize())
-                .uploadedAt(mediaFile.getUploadedAt())
-                .build();
-    }
-    
+
     private CommentDTO toCommentDTO(Comment comment) {
         return CommentDTO.builder()
-                .id(comment.getId())
-                .commenterName(comment.getCommenter().getFirstName() + " " + comment.getCommenter().getLastName())
-                .commenterId(comment.getCommenter().getId())
+                .commentId(comment.getCommentId())
+                .memoryId(comment.getMemoryId())
+                .userId(comment.getUserId())
                 .description(comment.getDescription())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())

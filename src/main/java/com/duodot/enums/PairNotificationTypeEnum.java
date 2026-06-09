@@ -13,7 +13,8 @@ public enum PairNotificationTypeEnum {
     REJECTED("REJECTED"),
     ACCEPTED("ACCEPTED"),
     CANCELLED("CANCELLED"),
-    UNPAIRED("UNPAIRED");
+    UNPAIRED("UNPAIRED"),
+    COMMENT_ADDED("COMMENT ADDED");
 
     @Getter
     private String value;

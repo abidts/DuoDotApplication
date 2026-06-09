@@ -8,6 +8,7 @@ import com.duodot.entity.Pair;
 import com.duodot.entity.User;
 import com.duodot.exception.BadRequestException;
 import com.duodot.exception.ResourceNotFoundException;
+import com.duodot.repository.CommentRepository;
 import com.duodot.repository.MemoryRepository;
 import com.duodot.repository.PairRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MemoryService {
     
     private final MemoryRepository memoryRepository;
+    private final CommentRepository commentRepository;
     private final PairRepository pairRepository;
     private final UserService userService;
     private final FileStorageService fileStorageService;
@@ -35,14 +39,14 @@ public class MemoryService {
         
         Pair pair = pairRepository.findActivePairByUserId(currentUser.getUserId())
                 .orElseThrow(() -> new BadRequestException("You must be paired to create memories"));
-        
+
         Memory memory = Memory.builder()
-                .pair(pair)
-                .creator(currentUser)
-                .memoryDate(request.getMemoryDate())
+                .pairId(pair.getPairId())
+                .userId(currentUser.getUserId())
+                .memoryDate(toCalendar(request.getMemoryDate()))
                 .description(request.getDescription())
                 .location(request.getLocation())
-                .lastUpdatedBy(currentUser)
+                .lastUpdatedBy(currentUser.getUserId())
                 .build();
         
         memoryRepository.save(memory);
@@ -65,7 +69,7 @@ public class MemoryService {
         Pair pair = pairRepository.findActivePairByUserId(currentUser.getUserId())
                 .orElseThrow(() -> new BadRequestException("You must be paired to view memories"));
 
-        Page<MemoryResponseBean> memories = memoryRepository.findByPairOrderByMemoryDateDesc(pair, pageable)
+        Page<MemoryResponseBean> memories = memoryRepository.findByPairIdOrderByMemoryDateDesc(pair.getPairId(), pageable)
                 .map(memoryMapper::toResponse);
 
         serviceResponseBean.setStatus(Boolean.TRUE);
@@ -75,10 +79,10 @@ public class MemoryService {
     }
     
     @Transactional(readOnly = true)
-    public ServiceResponseBean getMemoryById(Long memoryId, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean getMemoryById(String memoryId, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
-        
-        Memory memory = memoryRepository.findById(memoryId)
+
+        Memory memory = memoryRepository.findByMemoryId(memoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Memory not found"));
         
         validateMemoryAccess(memory, currentUser);
@@ -90,18 +94,18 @@ public class MemoryService {
     }
     
     @Transactional
-    public ServiceResponseBean updateMemory(Long memoryId, MemoryRequestBean request, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean updateMemory(String memoryId, MemoryRequestBean request, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
-        
-        Memory memory = memoryRepository.findById(memoryId)
+
+        Memory memory = memoryRepository.findByMemoryId(memoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Memory not found"));
-        
+
         validateMemoryAccess(memory, currentUser);
-        
-        memory.setMemoryDate(request.getMemoryDate());
+
+        memory.setMemoryDate(toCalendar(request.getMemoryDate()));
         memory.setDescription(request.getDescription());
         memory.setLocation(request.getLocation());
-        memory.setLastUpdatedBy(currentUser);
+        memory.setLastUpdatedBy(currentUser.getUserId());
         
         memoryRepository.save(memory);
 
@@ -112,14 +116,15 @@ public class MemoryService {
     }
     
     @Transactional
-    public ServiceResponseBean deleteMemory(Long memoryId, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean deleteMemory(String memoryId, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
-        
-        Memory memory = memoryRepository.findById(memoryId)
+
+        Memory memory = memoryRepository.findByMemoryId(memoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Memory not found"));
         
         validateMemoryAccess(memory, currentUser);
-        
+
+        commentRepository.deleteByMemoryId(memory.getMemoryId());
         memoryRepository.delete(memory);
 
         serviceResponseBean.setStatus(Boolean.TRUE);
@@ -129,16 +134,16 @@ public class MemoryService {
     }
     
     @Transactional
-    public ServiceResponseBean addMediaToMemory(Long memoryId, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean addMediaToMemory(String memoryId, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
         User currentUser = userService.getCurrentUser();
-        
-        Memory memory = memoryRepository.findById(memoryId)
+
+        Memory memory = memoryRepository.findByMemoryId(memoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Memory not found"));
-        
+
         validateMemoryAccess(memory, currentUser);
-        
+
         fileStorageService.uploadMemoryFiles(memory, files);
-        memory.setLastUpdatedBy(currentUser);
+        memory.setLastUpdatedBy(currentUser.getUserId());
         memoryRepository.save(memory);
 
         serviceResponseBean.setStatus(Boolean.TRUE);
@@ -153,17 +158,25 @@ public class MemoryService {
         Pair pair = pairRepository.findActivePairByUserId(currentUser.getUserId())
                 .orElseThrow(() -> new BadRequestException("You must be paired to view memory count"));
 
-        Long count = memoryRepository.countByPair(pair);
+        Long count = memoryRepository.countByPairId(pair.getPairId());
         serviceResponseBean.setStatus(Boolean.TRUE);
         serviceResponseBean.setMessage("Total memory count");
         serviceResponseBean.setData(count);
         return serviceResponseBean;
     }
     
+    private Calendar toCalendar(java.time.LocalDate date) {
+        if (date == null) return null;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(java.sql.Date.valueOf(date));
+        return cal;
+    }
+
     private void validateMemoryAccess(Memory memory, User user) {
-        Pair memoryPair = memory.getPair();
-        if (!memoryPair.getSenderId().equals(user.getUserId()) &&
-            !memoryPair.getReceiverId().equals(user.getUserId())) {
+        Pair pair = pairRepository.findByPairId(memory.getPairId())
+                .orElseThrow(() -> new BadRequestException("Associated pair not found"));
+        if (!pair.getSenderId().equals(user.getUserId()) &&
+            !pair.getReceiverId().equals(user.getUserId())) {
             throw new BadRequestException("You don't have access to this memory");
         }
     }

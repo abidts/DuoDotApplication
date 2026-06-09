@@ -6,46 +6,44 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/memories/{memoryId}/comments")
+@RequestMapping("/comments")
 @RequiredArgsConstructor
 public class CommentController {
-    
+
     private final CommentService commentService;
-    
+
     @PostMapping
     public ServiceResponseBean addComment(
-            @PathVariable Long memoryId,
+            @RequestParam String memoryId,
             @RequestParam String description
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = commentService.addComment(memoryId, description, serviceResponseBean);
         return serviceResponseBean;
     }
-    
+
     @GetMapping
     public ServiceResponseBean getComments(
-            @PathVariable Long memoryId
+            @RequestParam String memoryId
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = commentService.getCommentsByMemory(memoryId, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @PutMapping("/{commentId}")
+
+    @PutMapping("/update")
     public ServiceResponseBean updateComment(
-            @PathVariable Long memoryId,
-            @PathVariable Long commentId,
+            @RequestParam String commentId,
             @RequestParam String description
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = commentService.updateComment(commentId, description, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @DeleteMapping("/{commentId}")
+
+    @DeleteMapping("/delete")
     public ServiceResponseBean deleteComment(
-            @PathVariable Long memoryId,
-            @PathVariable Long commentId
+            @RequestParam String commentId
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = commentService.deleteComment(commentId, serviceResponseBean);

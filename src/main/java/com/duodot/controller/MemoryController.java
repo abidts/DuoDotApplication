@@ -17,19 +17,19 @@ import java.util.List;
 @RequestMapping("/memories")
 @RequiredArgsConstructor
 public class MemoryController {
-    
+
     private final MemoryService memoryService;
-    
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean createMemory(
-            @Valid @ModelAttribute MemoryRequestBean request,
-            @RequestParam(required = false) List<MultipartFile> files
+            @Valid @RequestPart("request") MemoryRequestBean request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.createMemory(request, files, serviceResponseBean);
         return serviceResponseBean;
     }
-    
+
     @GetMapping
     public ServiceResponseBean getMemories(
             @RequestParam(defaultValue = "0") int page,
@@ -40,45 +40,45 @@ public class MemoryController {
         serviceResponseBean = memoryService.getMemories(pageable, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @GetMapping("/{memoryId}")
+
+    @GetMapping("/get")
     public ServiceResponseBean getMemory(
-            @PathVariable Long memoryId
+            @RequestParam String memoryId
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.getMemoryById(memoryId, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @PutMapping("/{memoryId}")
+
+    @PutMapping("/update")
     public ServiceResponseBean updateMemory(
-            @PathVariable Long memoryId,
+            @RequestParam String memoryId,
             @Valid @RequestBody MemoryRequestBean request
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.updateMemory(memoryId, request, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @PostMapping(value = "/{memoryId}/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PostMapping(value = "/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean addMedia(
-            @PathVariable Long memoryId,
+            @RequestParam String memoryId,
             @RequestParam List<MultipartFile> files
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.addMediaToMemory(memoryId, files, serviceResponseBean);
         return serviceResponseBean;
     }
-    
-    @DeleteMapping("/{memoryId}")
+
+    @DeleteMapping("/delete")
     public ServiceResponseBean deleteMemory(
-            @PathVariable Long memoryId
+            @RequestParam String memoryId
     ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.deleteMemory(memoryId, serviceResponseBean);
         return serviceResponseBean;
     }
-    
+
     @GetMapping("/count")
     public ServiceResponseBean getTotalMemories() {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
