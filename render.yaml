@@ -36,23 +36,11 @@ services:
           property: password
 
       # Redis
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: duodot-redis
-          property: host
-
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: duodot-redis
-          property: port
-
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: duodot-redis
-          property: password
+          property: connectionString
 
       # RabbitMQ (internal private service)
       - key: RABBITMQ_HOST
