@@ -12,6 +12,7 @@ import com.duodot.repository.CommentRepository;
 import com.duodot.repository.MemoryRepository;
 import com.duodot.repository.PairRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemoryService {
@@ -35,30 +37,36 @@ public class MemoryService {
     
     @Transactional
     public ServiceResponseBean createMemory(MemoryRequestBean request, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
-        User currentUser = userService.getCurrentUser();
-        
-        Pair pair = pairRepository.findActivePairByUserId(currentUser.getUserId())
-                .orElseThrow(() -> new BadRequestException("You must be paired to create memories"));
+        try {
+            User currentUser = userService.getCurrentUser();
+            log.info("User {} creating memory", currentUser.getUserId());
 
-        Memory memory = Memory.builder()
-                .pairId(pair.getPairId())
-                .userId(currentUser.getUserId())
-                .memoryDate(toCalendar(request.getMemoryDate()))
-                .description(request.getDescription())
-                .location(request.getLocation())
-                .lastUpdatedBy(currentUser.getUserId())
-                .build();
-        
-        memoryRepository.save(memory);
-        
-        // Upload files if provided
-        if (files != null && !files.isEmpty()) {
-            fileStorageService.uploadMemoryFiles(memory, files);
+            Pair pair = pairRepository.findActivePairByUserId(currentUser.getUserId())
+                    .orElseThrow(() -> new BadRequestException("You must be paired to create memories"));
+
+            Memory memory = Memory.builder()
+                    .pairId(pair.getPairId())
+                    .userId(currentUser.getUserId())
+                    .memoryDate(toCalendar(request.getMemoryDate()))
+                    .description(request.getDescription())
+                    .location(request.getLocation())
+                    .lastUpdatedBy(currentUser.getUserId())
+                    .build();
+
+            memoryRepository.save(memory);
+
+            // Upload files if provided
+            if (files != null && !files.isEmpty()) {
+                fileStorageService.uploadMemoryFiles(memory, files);
+            }
+
+            serviceResponseBean.setStatus(Boolean.TRUE);
+            serviceResponseBean.setMessage("Memory created successfully");
+            serviceResponseBean.setData(memoryMapper.toResponse(memory));
+        } catch (Exception e) {
+            log.error("Exception occurred while creating memory :: {}", e);
+            serviceResponseBean.setMessage(e.getLocalizedMessage());
         }
-
-        serviceResponseBean.setStatus(Boolean.TRUE);
-        serviceResponseBean.setMessage("Memory created successfully");
-        serviceResponseBean.setData(memoryMapper.toResponse(memory));
         return serviceResponseBean;
     }
     
