@@ -7,12 +7,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.List;
 
 @RestController
@@ -24,13 +26,17 @@ public class MemoryController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean createMemory(
-            @RequestParam("memoryDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate memoryDate,
+            @RequestParam("memoryDate") String memoryDate,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "location", required = false) String location,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) {
+    ) throws Exception {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new SimpleDateFormat("MM-dd-yyyy").parse(memoryDate));
+        LocalDate parsedDate = cal.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
         MemoryRequestBean request = MemoryRequestBean.builder()
-                .memoryDate(memoryDate)
+                .memoryDate(parsedDate)
                 .description(description)
                 .location(location)
                 .build();
