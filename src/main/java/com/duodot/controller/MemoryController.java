@@ -3,18 +3,16 @@ package com.duodot.controller;
 import com.duodot.requestBean.MemoryRequestBean;
 import com.duodot.responseBean.ServiceResponseBean;
 import com.duodot.service.MemoryService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,16 +21,19 @@ import java.util.List;
 public class MemoryController {
 
     private final MemoryService memoryService;
-    private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean createMemory(
-            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                    schema = @Schema(implementation = MemoryRequestBean.class)))
-            @RequestPart("request") String requestJson,
+            @RequestParam("memoryDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate memoryDate,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "location", required = false) String location,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) throws Exception {
-        MemoryRequestBean request = objectMapper.readValue(requestJson, MemoryRequestBean.class);
+    ) {
+        MemoryRequestBean request = MemoryRequestBean.builder()
+                .memoryDate(memoryDate)
+                .description(description)
+                .location(location)
+                .build();
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
         serviceResponseBean = memoryService.createMemory(request, files, serviceResponseBean);
         return serviceResponseBean;
