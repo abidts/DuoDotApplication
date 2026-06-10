@@ -1,6 +1,9 @@
 package com.duodot.responseBean;
 
 import com.duodot.dto.CommentDTO;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,17 +16,23 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+
 public class MemoryResponseBean {
-    private Long id;
+    
+    @JsonProperty(value = "memory_id")
     private String memoryId;
+    @JsonProperty(value = "pair_id")
     private String pairId;
+    @JsonProperty(value = "user_id")
     private String userId;
-    private Calendar memoryDate;
+    @JsonProperty(value = "memory_date")
+    private String memoryDate;
     private String description;
     private String location;
+    @JsonProperty(value = "media_files")
     private List<String> mediaFiles;
-    private List<CommentDTO> comments;
-    private String lastUpdatedBy;
-    private Calendar createdAt;
-    private Calendar updatedAt;
+    @JsonProperty(value = "created_date")
+    private String createdDate;
+   
 }

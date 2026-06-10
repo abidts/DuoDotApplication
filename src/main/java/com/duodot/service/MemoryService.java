@@ -36,7 +36,7 @@ public class MemoryService {
     private final MemoryMapper memoryMapper;
     
     @Transactional
-    public ServiceResponseBean createMemory(MemoryRequestBean request, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
+    public ServiceResponseBean createMemory(String description, String location, List<MultipartFile> files, ServiceResponseBean serviceResponseBean) {
         try {
             User currentUser = userService.getCurrentUser();
             log.info("User {} creating memory", currentUser.getUserId());
@@ -47,9 +47,9 @@ public class MemoryService {
             Memory memory = Memory.builder()
                     .pairId(pair.getPairId())
                     .userId(currentUser.getUserId())
-                    .memoryDate(toCalendar(request.getMemoryDate()))
-                    .description(request.getDescription())
-                    .location(request.getLocation())
+                    .memoryDate(Calendar.getInstance())
+                    .description(description)
+                    .location(location)
                     .lastUpdatedBy(currentUser.getUserId())
                     .build();
 

@@ -4,44 +4,33 @@ import com.duodot.requestBean.MemoryRequestBean;
 import com.duodot.responseBean.ServiceResponseBean;
 import com.duodot.service.MemoryService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.List;
 
 @RestController
 @RequestMapping("/memories")
 @RequiredArgsConstructor
+@Validated
 public class MemoryController {
 
     private final MemoryService memoryService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ServiceResponseBean createMemory(
-            @RequestParam("memoryDate") String memoryDate,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "location", required = false) String location,
+            @RequestParam("description") @NotBlank(message = "Description cannot be blank") String description,
+            @RequestParam("location") @NotBlank(message = "Location cannot be blank") String location,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) throws Exception {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(new SimpleDateFormat("MM-dd-yyyy").parse(memoryDate));
-        LocalDate parsedDate = cal.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-        MemoryRequestBean request = MemoryRequestBean.builder()
-                .memoryDate(parsedDate)
-                .description(description)
-                .location(location)
-                .build();
+    ) {
         ServiceResponseBean serviceResponseBean = new ServiceResponseBean();
-        serviceResponseBean = memoryService.createMemory(request, files, serviceResponseBean);
+        serviceResponseBean = memoryService.createMemory(description, location, files, serviceResponseBean);
         return serviceResponseBean;
     }
 
@@ -56,7 +45,7 @@ public class MemoryController {
         return serviceResponseBean;
     }
 
-    @GetMapping("/get")
+    @GetMapping("/fetch")
     public ServiceResponseBean getMemory(
             @RequestParam String memoryId
     ) {
